@@ -133,3 +133,24 @@ class MergePlan:
     next_version: SemVer | None = None
     changelog: list[str] = field(default_factory=list)
     rationale: list[str] = field(default_factory=list)   # 判定依据，可解释输出
+    skipped: list[str] = field(default_factory=list)     # 变基时被跳过的提交（如合并提交）
+
+
+@dataclass
+class LinePlan:
+    """单条发布线的规划结果。"""
+
+    name: str
+    plan: MergePlan = field(default_factory=MergePlan)
+    # 因不属于本线历史而被忽略的标签（附带忽略原因）
+    ignored_tags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class MultiLinePlan:
+    """多条发布线的整体规划结果。"""
+
+    lines: dict[str, LinePlan] = field(default_factory=dict)
+    # 跨线共享已发布部分时，所有线待发布提交的统一执行顺序（确定、可复现）
+    global_order: list[str] = field(default_factory=list)
+    rationale: list[str] = field(default_factory=list)

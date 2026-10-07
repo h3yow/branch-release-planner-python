@@ -15,6 +15,8 @@ class FailureReason(enum.Enum):
     UNKNOWN_TAG = "unknown_tag"                    # 引用了不存在的标签
     INVALID_VERSION = "invalid_version"            # 版本号无法解析
     EMPTY_PLAN = "empty_plan"                      # 无可规划的提交
+    UNREBASEABLE = "unrebaseable"                  # 输入结构不适合变基式集成
+    INVALID_REVISION = "invalid_revision"          # 导入修订号越界
 
 
 class PlanError(Exception):
