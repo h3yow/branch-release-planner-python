@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import re
 from dataclasses import dataclass, field
 from functools import total_ordering
@@ -132,4 +133,67 @@ class MergePlan:
     order: list[str] = field(default_factory=list)       # 提交 id 的执行顺序
     next_version: SemVer | None = None
     changelog: list[str] = field(default_factory=list)
+    rationale: list[str] = field(default_factory=list)   # 判定依据，可解释输出
+
+
+class IntegrationMode(enum.Enum):
+    """集成方式：合并式（保留合并点）或变基式（拉成直线）。"""
+
+    MERGE = "merge"
+    REBASE = "rebase"
+
+
+@dataclass(frozen=True)
+class IgnoredTag:
+    """因不属于某条发布线而被忽略的标签。"""
+
+    name: str
+    commit_id: str
+    reason: str = ""
+
+
+@dataclass
+class LinePlan:
+    """单条发布线的版本与变更日志结论。"""
+
+    branch: str = ""
+    head: str = ""
+    next_version: SemVer | None = None
+    baseline: SemVer | None = None
+    baseline_tag: str | None = None
+    changelog: list[str] = field(default_factory=list)
+    used_tags: list[str] = field(default_factory=list)
+    ignored_tags: list[IgnoredTag] = field(default_factory=list)
+    pending: list[str] = field(default_factory=list)
+
+
+@dataclass
+class RebaseStep:
+    """变基序列中的一步：保留某个提交，或跳过某个提交（附原因）。"""
+
+    action: str = "keep"          # keep / skip
+    commit_id: str = ""
+    reason: str = ""
+    branch: str = ""
+
+
+@dataclass
+class RebasePlan:
+    """变基式集成结论：每条线被拉成一条直线。"""
+
+    order: list[str] = field(default_factory=list)            # 总的线性顺序（仅保留的提交）
+    lines: dict[str, list[RebaseStep]] = field(default_factory=dict)
+    skipped: list[RebaseStep] = field(default_factory=list)
+    rationale: list[str] = field(default_factory=list)
+
+
+@dataclass
+class MultiReleasePlan:
+    """多条发布线并行编排的完整结论。"""
+
+    lines: list[LinePlan] = field(default_factory=list)
+    merge_order: list[str] = field(default_factory=list)
+    rebase_order: list[str] = field(default_factory=list)
+    rebase: RebasePlan | None = None
+    shared_commits: list[str] = field(default_factory=list)
     rationale: list[str] = field(default_factory=list)   # 判定依据，可解释输出
